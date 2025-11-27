@@ -108,7 +108,9 @@ A próxima versão do sistema seguirá este planejamento:
 ## 📄 Conclusão
 
 Eu usei esse projeto como laboratório de aprendizado e registro das minhas tentativas.
-Aprendi e apliquei pela primeira vez algumas tecnologias e conceitos, dando destaque à primeira vez que consegui utilizar o Spring Security 😎
+
+Aprendi e apliquei pela primeira vez novas tecnologias e conceitos, dando destaque à primeira vez que utilizei o Spring Security 😎
+
 Não aceito contribuições externas — o objetivo atual é limpar e refatorar para uma nova versão.
 
 Sinta-se livre para entrar em contato e/ou dar qualquer feedback!
