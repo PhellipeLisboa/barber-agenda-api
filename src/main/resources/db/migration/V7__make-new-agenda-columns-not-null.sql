@@ -1,0 +1,2 @@
+ALTER TABLE agenda ALTER COLUMN workday_start SET NOT NULL;
+ALTER TABLE agenda ALTER COLUMN workday_end SET NOT NULL;

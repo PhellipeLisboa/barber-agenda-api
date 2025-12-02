@@ -1,0 +1,2 @@
+ALTER TABLE appointments
+ALTER COLUMN agenda_id TYPE BIGINT;
