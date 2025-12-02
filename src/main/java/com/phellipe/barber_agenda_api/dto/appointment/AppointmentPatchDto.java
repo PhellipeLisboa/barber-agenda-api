@@ -8,8 +8,6 @@ import java.util.UUID;
 
 public record AppointmentPatchDto(
 
-        @Valid
-
         //@OptionalSize(min = 4, max = 30, message = "Professional name must be between 4 and 30 characters.")
         Optional<UUID> professionalId,
         Optional<LocalDateTime> appointmentDateTime

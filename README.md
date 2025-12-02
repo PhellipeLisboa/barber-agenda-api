@@ -1,26 +1,11 @@
 # barber-agenda-api
 
-API REST para gerenciar agendas e agendamentos de barbearias — TENTATIVA de construir uma plataforma de múltiplas agendas/barbearias.
-
-⚠️ Status: protótipo / versão experimental —> Ultima versão antes de uma refatoração para uma API de um único estabelecimento, cujo objetivo é apenas registrar o que foi feito.
+**API REST para gerenciar agendamentos de barbearias.**
 
 ## 📋 Visão geral
 
-Este projeto foi pensado originalmente para permitir gerenciar múltiplas agendas de diferentes barbearias / profissionais. As funcionalidades contempladas incluem:
-
-- Usuário com roles (admin, owner, profissional, usuário comum).
-
-- Autenticação e autorização via JWT.
-
-- Entidades de Agenda, Appointment, User, Role, etc.
-
-- Controle de permissões para ações como criação, edição, deleção de agendas e agendamentos.
-
-- Validações (tamanhos de strings, horário de funcionamento, conflito de agendamentos, etc).
-
-- DTOs, mapeamentos e persistência usando Spring Data JPA / Hibernate.
-
-Esta versão se resume a uma tentativa que acabou sendo um passo grande demais para o que consigo fazer no momento, por isso será usado apenas como backup/histórico, antes de refatorar o sistema para atender uma única barbearia, com modelo simplificado.
+Este projeto foi pensado originalmente para permitir gerenciar múltiplas agendas de diferentes barbearias / profissionais, 
+mas durante o desenvolvimento resolvi fazer para apenas uma barbearia.
 
 ## 🛠️ Tecnologias
 
@@ -34,7 +19,7 @@ Esta versão se resume a uma tentativa que acabou sendo um passo grande demais p
   
 - FlyWay para migrations
 
-- Bean Validation (jakarta.validation) para validar requests
+- Bean Validation para validar requests
 
 - Autenticação com JWT
 
@@ -49,7 +34,6 @@ Esta versão se resume a uma tentativa que acabou sendo um passo grande demais p
 git clone https://github.com/PhellipeLisboa/barber-agenda-api.git
 cd barber-agenda-api
 
-
 ### 2 - Configure o banco de dados (e o application.properties / variáveis de ambiente) conforme sua instância local.
 
 Compile e rode com Maven:
@@ -57,23 +41,21 @@ Compile e rode com Maven:
 ./mvnw spring-boot:run
 
 
-A aplicação irá subir (normalmente na porta 8080), com configurações de segurança, JWT, endpoints e APIs conforme implementado até agora.
-
 ## 📂 Estrutura de pacotes
 
-**model** —> Entidades JPA: User, Role, Agenda, Appointment, etc.
+**model** —> Entidades JPA: User, Role, Appointment, etc.
 
-**dto** —> Classes DTO para requests/responses (AgendaRequestDto, AppointmentPatchDto, etc).
+**dto** —> Classes DTO para requests/responses.
 
-**infra.security** —> Configuração de segurança, filtros JWT, controle de autorização, roles, etc.
+**infra.security** —> Configuração de segurança, filtros JWT, controle de autorização, etc.
 
-**service** —> Lógica de negócio, validações, regras de serviço para agendas e agendamentos.
+**service** —> Lógica de negócio, validações, regras de negócio de agendamentos.
 
 **repository** — Interfaces Spring Data JPA para persistência.
 
 **mapper** — Mapeamento entre DTOs e entidades.
 
-**exception / exception.handler** — Exceções personalizadas da aplicação e handler global (para erros de negócio) + (tentativas de) handler de segurança.
+**exception / exception.handler** — Exceções personalizadas da aplicação e tratamento de exceções.
 
 Outros pacotes conforme necessário para funcionalidades extras.
 
@@ -81,7 +63,7 @@ Outros pacotes conforme necessário para funcionalidades extras.
 
 - Criação de usuários e autenticação (login / registro) com JWT.
 
-- Criação de agendas e agendamentos.
+- CRUD de agendamentos.
 
 - Validações via Bean Validation.
 
@@ -92,25 +74,17 @@ Outros pacotes conforme necessário para funcionalidades extras.
 
 ## 🎯 Próximos passos
 
-Este repositório ficará como marco histórico / backup antes da refatoração. 
-
 A próxima versão do sistema seguirá este planejamento:
 
-- Refatorar o domínio para trabalhar com apenas uma barbearia.
-- Manter apenas as partes essenciais (User, Role, Appointment, Service/Agenda, etc).
-- Melhorar segurança e permissões.
-- Limpar endpoints, DTOs e camadas desnecessárias.
+- Realizar testes.
 - Fazer front-end
 - Docker.
-- Realizar testes.
 - Preparar para deploy real.
 
 ## 📄 Conclusão
 
-Eu usei esse projeto como laboratório de aprendizado e registro das minhas tentativas.
+Esse projeto funciona como um laboratório de aprendizado e registro da minha evolução técnica como desenvolvedor backend.
 
 Aprendi e apliquei pela primeira vez novas tecnologias e conceitos, dando destaque à primeira vez que utilizei o Spring Security 😎
-
-Não aceito contribuições externas — o objetivo atual é limpar e refatorar para uma nova versão.
 
 Sinta-se livre para entrar em contato e/ou dar qualquer feedback!
