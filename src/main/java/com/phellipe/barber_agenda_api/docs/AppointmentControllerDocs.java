@@ -5,12 +5,13 @@ import com.phellipe.barber_agenda_api.dto.appointment.AppointmentRequestDto;
 import com.phellipe.barber_agenda_api.dto.appointment.AppointmentResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
+
 
 import java.util.List;
 
@@ -36,8 +37,8 @@ public interface AppointmentControllerDocs {
     @ApiResponse(responseCode = "409", description = "Horário de agendamento indisponível.")
     @ApiResponse(responseCode = "500", description = "Erro interno no servidor.")
     ResponseEntity<AppointmentResponseDto> createAppointment(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do novo agendamento para registro.")
-            @RequestBody @Valid AppointmentRequestDto dto
+            @RequestBody(description = "Dados do novo agendamento para registro.")
+            @Valid AppointmentRequestDto dto
     );
 
     @Operation(summary = "Listar agendamentos", description = "Retorna todos os agendamentos cadastrados.")
@@ -72,8 +73,8 @@ public interface AppointmentControllerDocs {
     ResponseEntity<AppointmentResponseDto> updateAppointment(
             @Parameter(description = "ID do agendamento para realizar a atualização.")
             @PathVariable("appointment_id") Long appointment_id,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do agendamento para realizar a atualização.")
-            @RequestBody @Valid AppointmentPatchDto dto
+            @RequestBody(description = "Dados do agendamento para realizar a atualização.")
+            @Valid AppointmentPatchDto dto
     );
 
     @Operation(summary = "Deletar agendamento", description = "Remove um agendamento pelo ID.")
