@@ -1,6 +1,7 @@
 package com.phellipe.barber_agenda_api.controller;
 
 import com.phellipe.barber_agenda_api.dto.UserResponseDto;
+import com.phellipe.barber_agenda_api.infra.config.ApiPaths;
 import com.phellipe.barber_agenda_api.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping(ApiPaths.BASE_PATH + "/users")
 @SecurityRequirement(name = "bearerAuth")
 @ApiResponse(responseCode = "401", description = "Ação não autorizada.")
 @ApiResponse(responseCode = "403", description = "O usuário não tem permissão para acessar esse recurso.")

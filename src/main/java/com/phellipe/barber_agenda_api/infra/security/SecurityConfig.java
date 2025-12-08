@@ -1,5 +1,6 @@
 package com.phellipe.barber_agenda_api.infra.security;
 
+import com.phellipe.barber_agenda_api.infra.config.ApiPaths;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -38,8 +39,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs/**").permitAll() //hasHole("ADMIN")?
                         .requestMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll() //hasHole("ADMIN")?
 
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, ApiPaths.BASE_PATH + "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, ApiPaths.BASE_PATH + "/auth/register").permitAll()
 
 
 //                        .requestMatchers(HttpMethod.GET, "/appointments").hasAnyRole("ADMIN", "OWNER", "PROFESSIONAL", "USER")

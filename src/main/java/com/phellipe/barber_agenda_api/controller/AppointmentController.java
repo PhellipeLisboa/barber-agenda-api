@@ -3,6 +3,7 @@ package com.phellipe.barber_agenda_api.controller;
 import com.phellipe.barber_agenda_api.dto.appointment.AppointmentPatchDto;
 import com.phellipe.barber_agenda_api.dto.appointment.AppointmentRequestDto;
 import com.phellipe.barber_agenda_api.dto.appointment.AppointmentResponseDto;
+import com.phellipe.barber_agenda_api.infra.config.ApiPaths;
 import com.phellipe.barber_agenda_api.service.BusinessHourService;
 import com.phellipe.barber_agenda_api.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/appointments")
+@RequestMapping(ApiPaths.BASE_PATH + "/appointments")
 @SecurityRequirement(name = "bearerAuth")
 @ApiResponse(responseCode = "401", description = "Ação não autorizada.")
 @Tag(name = "appointments", description = "Controlador para criar e editar agendamentos")

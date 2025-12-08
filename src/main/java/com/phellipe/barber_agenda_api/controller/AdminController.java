@@ -1,6 +1,7 @@
 package com.phellipe.barber_agenda_api.controller;
 
 import com.phellipe.barber_agenda_api.dto.UserResponseDto;
+import com.phellipe.barber_agenda_api.infra.config.ApiPaths;
 import com.phellipe.barber_agenda_api.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping(ApiPaths.BASE_PATH + "/admin")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasRole('ADMIN')")
 @ApiResponse(responseCode = "401", description = "Ação não autorizada.")
