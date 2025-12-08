@@ -36,7 +36,7 @@ public interface AppointmentControllerDocs {
     @ApiResponse(responseCode = "409", description = "Horário de agendamento indisponível.")
     @ApiResponse(responseCode = "500", description = "Erro interno no servidor.")
     ResponseEntity<AppointmentResponseDto> createAppointment(
-            @Parameter(description = "Dados do novo agendamento para registro.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do novo agendamento para registro.")
             @RequestBody @Valid AppointmentRequestDto dto
     );
 
@@ -72,7 +72,7 @@ public interface AppointmentControllerDocs {
     ResponseEntity<AppointmentResponseDto> updateAppointment(
             @Parameter(description = "ID do agendamento para realizar a atualização.")
             @PathVariable("appointment_id") Long appointment_id,
-            @Parameter(description = "Dados do agendamento para realizar a atualização.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do agendamento para realizar a atualização.")
             @RequestBody @Valid AppointmentPatchDto dto
     );
 

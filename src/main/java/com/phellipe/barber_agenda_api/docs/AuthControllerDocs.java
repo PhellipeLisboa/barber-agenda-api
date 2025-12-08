@@ -19,7 +19,7 @@ public interface AuthControllerDocs {
     @ApiResponse(responseCode = "401", description = "Credenciais inválidas.")
     @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")
     ResponseEntity<AuthResponseDto> login(
-            @Parameter(description = "Credenciais do usuário para login.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Credenciais do usuário para login.")
             @RequestBody LoginRequestDto dto
     );
 
@@ -28,7 +28,7 @@ public interface AuthControllerDocs {
     @ApiResponse(responseCode = "409", description = "O email já foi utilizado.")
     @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")
     ResponseEntity<AuthResponseDto> register(
-            @Parameter(description = "Dados do novo usuário para registro.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do novo usuário para registro.")
             @RequestBody RegisterRequestDto dto
     );
 
