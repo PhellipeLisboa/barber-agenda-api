@@ -57,7 +57,9 @@ public class UserService {
 
         Set<Role> userRoles =  user.getRoles();
 
-        Role role = roleRepository.findByRole("PROFESSIONAL").get();
+        Role role = roleRepository.findByRole("PROFESSIONAL").orElseThrow(
+                () -> new InvalidRoleException("PROFESSIONAL")
+        );
 
         if (userRoles.contains(role)) {
             throw new UserAlreadyHasRoleException("PROFESSIONAL");
