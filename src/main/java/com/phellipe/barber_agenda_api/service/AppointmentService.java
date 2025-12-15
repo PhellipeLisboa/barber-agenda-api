@@ -40,10 +40,8 @@ public class AppointmentService {
 
         User user = authService.getAuthenticatedUser();
 
-        List<Appointment> appointments = appointmentRepository.findAll();
-
-        if (user.getRoles().size() == 1 && user.hasRole("USER")) {
-            return appointments
+        if (user.isOnlyUser()) {
+            return appointmentRepository.findByCustomerId(user.getId())
                     .stream()
                     .filter(appointment -> appointment.getCustomerId().equals(user.getId()))
                     .map(AppointmentMapper::toDto)
@@ -51,13 +49,15 @@ public class AppointmentService {
         }
 
         if (user.hasRole("PROFESSIONAL")) {
-            return appointments.stream()
+            return appointmentRepository.findByProfessionalId(user.getId())
+                    .stream()
                     .filter(appointment -> appointment.getProfessionalId().equals(user.getId()))
                     .map(AppointmentMapper::toDto)
                     .toList();
         }
 
-        return appointments.stream()
+        return appointmentRepository.findAll()
+                .stream()
                 .map(AppointmentMapper::toDto)
                 .toList();
 
@@ -93,12 +93,13 @@ public class AppointmentService {
                 () -> new UserNotFoundException(dto.customerId())
         );
 
-        if (customer.getId().equals(authenticatedUser.getId())) {
-            appointment.setCustomerName(authenticatedUser.getName());
-        } else if (authenticatedUser.getRoles().size() != 1) {
+        boolean isSelfAppointment = authenticatedUser.getId().equals(customer.getId());
+        boolean canScheduleForOthers = authenticatedUser.hasRole("ADMIN") || authenticatedUser.hasRole("OWNER");
+
+        if (isSelfAppointment || canScheduleForOthers) {
             appointment.setCustomerName(customer.getName());
         } else {
-            throw new AccessDeniedException("You do not have permission to perform this action.");
+            throw new AccessDeniedException("You do not have permission to schedule an appointment for another user.");
         }
 
         validateAppointmentDateTime(dto.appointmentDateTime(), appointment);
@@ -116,27 +117,32 @@ public class AppointmentService {
                 () -> new ResourceNotFoundException("appointment", id)
         );
 
-        if (!LocalDateTime.now().plusHours(24).isBefore(appointmentEntity.getAppointmentDateTime())) {
+        LocalDateTime effectiveDateTime = dto.appointmentDateTime().orElse(appointmentEntity.getAppointmentDateTime());
+
+        LocalDateTime limit = LocalDateTime.now().plusHours(24);
+
+        if (effectiveDateTime.isBefore(limit)) {
             throw new InvalidOperationException("Appointments can only be updated or deleted at least 24 hours in advance.");
         }
 
-        if (dto.professionalId().isPresent()) {
-            User professional = userRepository.findById(dto.professionalId().get()).orElseThrow(
-                    () -> new UserNotFoundException(dto.professionalId().get())
+        dto.professionalId().ifPresent(professionalId -> {
+            User professional = userRepository.findById(professionalId).orElseThrow(
+                    () -> new UserNotFoundException(professionalId)
             );
-            if (professional.hasRole("PROFESSIONAL")) {
-                appointmentEntity.setProfessionalId(professional.getId());
-                appointmentEntity.setProfessionalName(professional.getName());
-            } else {
+
+            if (!professional.hasRole("PROFESSIONAL")) {
                 throw new RequiredRoleException("PROFESSIONAL");
             }
-        }
 
-        if (dto.appointmentDateTime().isPresent()) {
-            validateAppointmentDateTime(dto.appointmentDateTime().get(), appointmentEntity);
-        }
+            appointmentEntity.setProfessionalId(professional.getId());
+            appointmentEntity.setProfessionalName(professional.getName());
 
-        dto.appointmentDateTime().ifPresent(appointmentEntity::setAppointmentDateTime);
+        });
+
+        dto.appointmentDateTime().ifPresent(newDateTime -> {
+            validateAppointmentDateTime(newDateTime, appointmentEntity);
+            appointmentEntity.setAppointmentDateTime(newDateTime);
+        });
 
         Appointment updatedAppointment = appointmentRepository.save(appointmentEntity);
 
@@ -150,11 +156,13 @@ public class AppointmentService {
                 () -> new ResourceNotFoundException("appointment", id)
         );
 
-        if (!LocalDateTime.now().plusHours(24).isBefore(appointment.getAppointmentDateTime())) {
+        LocalDateTime limit = LocalDateTime.now().plusHours(24);
+
+        if (appointment.getAppointmentDateTime().isBefore(limit)) {
             throw new InvalidOperationException("Appointments can only be updated or deleted at least 24 hours in advance.");
         }
 
-        appointmentRepository.deleteById(id);
+        appointmentRepository.delete(appointment);
 
     }
 

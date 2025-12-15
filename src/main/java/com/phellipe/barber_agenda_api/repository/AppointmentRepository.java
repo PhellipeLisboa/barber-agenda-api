@@ -7,11 +7,13 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
     boolean existsByAppointmentDateTime(LocalDateTime appointmentDateTime);
     Optional<List<Appointment>> findByAppointmentDateTime(LocalDateTime appointmentDateTime);
-
+    List<Appointment> findByCustomerId(UUID customerId);
+    List<Appointment> findByProfessionalId(UUID professionalID);
 }

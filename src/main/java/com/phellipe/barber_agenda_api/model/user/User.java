@@ -76,6 +76,10 @@ public class User implements UserDetails {
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_" + role));
     }
 
+    public boolean isOnlyUser() {
+        return hasRole("USER") && roles.size() == 1;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles
