@@ -14,6 +14,7 @@ import com.phellipe.barber_agenda_api.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -45,6 +46,7 @@ public class AuthService {
         }
     }
 
+    @Transactional
     public AuthResponseDto register(RegisterRequestDto dto) {
 
         Optional<User> user = userRepository.findByEmail(dto.email());

@@ -1,15 +1,13 @@
 package com.phellipe.barber_agenda_api.service;
 
-import com.phellipe.barber_agenda_api.dto.UserResponseDto;
 import com.phellipe.barber_agenda_api.exception.*;
-import com.phellipe.barber_agenda_api.mapper.UserMapper;
 import com.phellipe.barber_agenda_api.model.user.Role;
 import com.phellipe.barber_agenda_api.model.user.User;
 import com.phellipe.barber_agenda_api.repository.RoleRepository;
 import com.phellipe.barber_agenda_api.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,7 +22,7 @@ public class AdminService {
         this.roleRepository = roleRepository;
     }
 
-
+    @Transactional
     public void givePermission(UUID userId, String roleName) {
 
 
@@ -48,6 +46,7 @@ public class AdminService {
 
     }
 
+    @Transactional
     public void revokePermission(UUID userId, String roleName) {
 
         User user = userRepository.findById(userId).orElseThrow(

@@ -8,6 +8,7 @@ import com.phellipe.barber_agenda_api.model.user.User;
 import com.phellipe.barber_agenda_api.repository.RoleRepository;
 import com.phellipe.barber_agenda_api.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -38,6 +39,7 @@ public class UserService {
         return UserMapper.toDto(user);
     }
 
+    @Transactional
     public void delete(UUID id) {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(id);
@@ -46,6 +48,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    @Transactional
     public void giveProfessionalRole(UUID userId) {
 
         User user = userRepository.findById(userId).orElseThrow(
@@ -66,6 +69,7 @@ public class UserService {
 
     }
 
+    @Transactional
     public void revokeProfessionalRole(UUID userId) {
 
         User user = userRepository.findById(userId).orElseThrow(

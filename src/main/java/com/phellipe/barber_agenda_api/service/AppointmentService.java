@@ -10,7 +10,7 @@ import com.phellipe.barber_agenda_api.model.BusinessHour;
 import com.phellipe.barber_agenda_api.model.user.User;
 import com.phellipe.barber_agenda_api.repository.AppointmentRepository;
 import com.phellipe.barber_agenda_api.repository.UserRepository;
-import org.springframework.cglib.core.Local;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -73,6 +73,7 @@ public class AppointmentService {
 
     }
 
+    @Transactional
     public AppointmentResponseDto save(AppointmentRequestDto dto) {
 
         Appointment appointment = AppointmentMapper.toEntity(dto);
@@ -107,6 +108,7 @@ public class AppointmentService {
         return AppointmentMapper.toDto(savedAppointment);
     }
 
+    @Transactional
     public AppointmentResponseDto update(Long id, AppointmentPatchDto dto) {
 
 
@@ -141,6 +143,7 @@ public class AppointmentService {
         return AppointmentMapper.toDto(updatedAppointment);
     }
 
+    @Transactional
     public void delete(Long id) {
 
         Appointment appointment = appointmentRepository.findById(id).orElseThrow(
