@@ -18,9 +18,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class AppointmentService {
@@ -103,7 +100,7 @@ public class AppointmentService {
             throw new AccessDeniedException("You do not have permission to schedule an appointment for another user.");
         }
 
-        validateAppointmentDateTime(dto.appointmentDateTime(), appointment);
+        validateAppointmentDateTime(dto.appointmentDateTime(), appointment, customer);
 
         Appointment savedAppointment = appointmentRepository.save(appointment);
 
@@ -113,9 +110,12 @@ public class AppointmentService {
     @Transactional
     public AppointmentResponseDto update(Long id, AppointmentPatchDto dto) {
 
-
         Appointment appointmentEntity = appointmentRepository.findById(id).orElseThrow(
                 () -> new ResourceNotFoundException("appointment", id)
+        );
+
+        User customer = userRepository.findById(appointmentEntity.getCustomerId()).orElseThrow(
+                () -> new UserNotFoundException(appointmentEntity.getCustomerId())
         );
 
         LocalDateTime effectiveDateTime = dto.appointmentDateTime().orElse(appointmentEntity.getAppointmentDateTime());
@@ -141,7 +141,7 @@ public class AppointmentService {
         });
 
         dto.appointmentDateTime().ifPresent(newDateTime -> {
-            validateAppointmentDateTime(newDateTime, appointmentEntity);
+            validateAppointmentDateTime(newDateTime, appointmentEntity, customer);
             appointmentEntity.setAppointmentDateTime(newDateTime);
         });
 
@@ -168,7 +168,7 @@ public class AppointmentService {
     }
 
 
-    private void validateAppointmentDateTime(LocalDateTime appointmentDateTime, Appointment appointment) {
+    private void validateAppointmentDateTime(LocalDateTime appointmentDateTime, Appointment appointment, User customer) {
 
         validateAppointmentInPast(appointmentDateTime);
 
@@ -176,7 +176,7 @@ public class AppointmentService {
 
         validateAppointmentDateTimeAlreadyBooked(appointmentDateTime, appointment);
 
-        validateUserAlreadyHaveAnAppointment(appointmentDateTime, appointment);
+        validateUserAlreadyHaveAnAppointment(appointmentDateTime, customer);
     }
 
     private void validateAppointmentInPast(LocalDateTime appointmentDateTime) {
@@ -215,13 +215,10 @@ public class AppointmentService {
 
     }
 
-    private void validateUserAlreadyHaveAnAppointment(LocalDateTime appointmentDateTime, Appointment appointment) {
-        User customer = userRepository.findById(appointment.getCustomerId()).orElseThrow(
-                () -> new UserNotFoundException(appointment.getCustomerId())
-        );
+    private void validateUserAlreadyHaveAnAppointment(LocalDateTime appointmentDateTime, User customer) {
 
         List<Appointment> appointmentsAtDateTime =
-                appointmentRepository .findByAppointmentDateTime(appointmentDateTime).orElse(Collections.emptyList());
+                appointmentRepository.findByAppointmentDateTime(appointmentDateTime).orElse(Collections.emptyList());
 
         boolean customerAlreadyHasAppointment  = appointmentsAtDateTime
                 .stream()
