@@ -14,8 +14,10 @@ public class AppointmentTestConstants {
     public static final LocalDateTime VALID_DATE = LocalDateTime.of(2025, 12, 18, 14, 0);
     public static final LocalDateTime DATE_IN_THE_PAST = LocalDateTime.of(2024, 12, 18, 14, 0);
     public static final LocalDateTime DATE_OUT_OF_BUSINESS_HOUR = LocalDateTime.of(2025, 12, 18, 22, 0);
-    public static final Appointment APPOINTMENT = createEntity(CUSTOMER_ID, PROFESSIONAL_ID, VALID_DATE);
-    public static final Appointment APPOINTMENT_WITH_OTHER_PROFESSIONAL = createEntity(CUSTOMER_ID, OTHER_PROFESSIONAL_ID, VALID_DATE);
+    public static final Long APPOINTMENT_ID = 1L;
+    public static final Long APPOINTMENT_WITH_OTHER_PROFESSIONAL_ID = 2L;
+    public static final Appointment APPOINTMENT = createEntity(APPOINTMENT_ID, CUSTOMER_ID, PROFESSIONAL_ID, VALID_DATE);
+    public static final Appointment APPOINTMENT_WITH_OTHER_PROFESSIONAL = createEntity(APPOINTMENT_WITH_OTHER_PROFESSIONAL_ID, CUSTOMER_ID, OTHER_PROFESSIONAL_ID, VALID_DATE);
 
     public static final AppointmentRequestDto APPOINTMENT_DTO = new AppointmentRequestDto(
             CUSTOMER_ID,
@@ -42,8 +44,9 @@ public class AppointmentTestConstants {
     );
 
 
-    public static final Appointment createEntity(UUID customerId, UUID professionalId, LocalDateTime appointmentDateTime) {
+    public static final Appointment createEntity(Long appointmentId, UUID customerId, UUID professionalId, LocalDateTime appointmentDateTime) {
         Appointment appointment = new Appointment();
+        appointment.setId(appointmentId);
         appointment.setCustomerId(customerId);
         appointment.setProfessionalId(professionalId);
         appointment.setAppointmentDateTime(appointmentDateTime);

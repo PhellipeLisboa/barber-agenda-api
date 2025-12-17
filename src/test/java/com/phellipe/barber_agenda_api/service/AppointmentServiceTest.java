@@ -336,4 +336,46 @@ class AppointmentServiceTest {
 
     }
 
+    @Nested
+    class findById {
+
+        @Test
+        void findById_ShouldReturnAppointmentResponseDto_WhenIdExists() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_ID)).thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT));
+
+            // Act
+            AppointmentResponseDto response = appointmentService.findById(AppointmentTestConstants.APPOINTMENT_ID);
+
+            // Assert
+            assertNotNull(response);
+            assertEquals(AppointmentTestConstants.APPOINTMENT_ID, response.id());
+            assertEquals(AppointmentTestConstants.APPOINTMENT.getCustomerId(), response.customerId());
+            assertEquals(AppointmentTestConstants.APPOINTMENT.getProfessionalId(), response.professionalId());
+            assertEquals(AppointmentTestConstants.APPOINTMENT.getAppointmentDateTime(), response.appointmentDateTime());
+            verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_ID);
+        }
+
+        @Test
+        void findById_ShouldThrowResourceNotFoundException_WhenIdNotExists() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_ID)).thenReturn(Optional.empty());
+
+            // Act
+            ResourceNotFoundException exception = assertThrows(
+                    ResourceNotFoundException.class,
+                    () -> appointmentService.findById(AppointmentTestConstants.APPOINTMENT_ID)
+            );
+
+            // Assert
+            assertTrue(exception.getMessage().contains("appointment"));
+            assertTrue(exception.getMessage().contains(AppointmentTestConstants.APPOINTMENT_ID.toString()));
+            verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_ID);
+
+        }
+
+    }
+
 }
