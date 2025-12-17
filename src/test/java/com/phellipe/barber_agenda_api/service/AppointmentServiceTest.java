@@ -259,6 +259,81 @@ class AppointmentServiceTest {
 
     }
 
+    @Nested
+    class findAll {
 
+        @Test
+        void findAll_shouldReturnCustomerAppointments_WhenUserIsOnlyUser() {
+
+            // Mocks
+            when(authService.getAuthenticatedUser()).thenReturn(UserTestConstants.CUSTOMER);
+            when(appointmentRepository.findByCustomerId(UserTestConstants.CUSTOMER_ID)).thenReturn(List.of(AppointmentTestConstants.APPOINTMENT));
+
+            // Act
+            List<AppointmentResponseDto> response = appointmentService.findAll();
+
+            // Assert
+            assertEquals(1, response.size());
+            assertEquals(UserTestConstants.CUSTOMER_ID, response.getFirst().customerId());
+            verify(appointmentRepository).findByCustomerId(UserTestConstants.CUSTOMER_ID);
+            verify(appointmentRepository, never()).findByProfessionalId(any());
+            verify(appointmentRepository, never()).findAll();
+
+        }
+
+        @Test
+        void findAll_shouldReturnProfessionalAppointments_WhenIsProfessional() {
+
+            // Mocks
+            when(authService.getAuthenticatedUser()).thenReturn(UserTestConstants.PROFESSIONAL);
+            when(appointmentRepository.findByProfessionalId(UserTestConstants.PROFESSIONAL_ID)).thenReturn(List.of(AppointmentTestConstants.APPOINTMENT));
+
+            // Act
+            List<AppointmentResponseDto> response = appointmentService.findAll();
+
+            // Assert
+            assertEquals(1, response.size());
+            assertEquals(UserTestConstants.PROFESSIONAL_ID, response.getFirst().professionalId());
+            verify(appointmentRepository).findByProfessionalId(UserTestConstants.PROFESSIONAL_ID);
+            verify(appointmentRepository, never()).findByCustomerId(any());
+            verify(appointmentRepository, never()).findAll();
+
+        }
+
+        @Test
+        void findAll_shouldReturnAllAppointments_WhenUserIsAdminOrOwner() {
+
+            // Mocks
+            when(authService.getAuthenticatedUser()).thenReturn(UserTestConstants.OWNER);
+            when(appointmentRepository.findAll()).thenReturn(List.of(
+                    AppointmentTestConstants.APPOINTMENT,
+                    AppointmentTestConstants.APPOINTMENT_WITH_OTHER_PROFESSIONAL
+            ));
+
+            // Act
+            List<AppointmentResponseDto> response = appointmentService.findAll();
+
+            // Assert
+            assertEquals(2, response.size());
+
+            assertTrue(
+                    response
+                            .stream()
+                            .anyMatch(appointment -> appointment.professionalId().equals(UserTestConstants.PROFESSIONAL_ID))
+            );
+
+            assertTrue(
+                    response
+                            .stream()
+                            .anyMatch(appointment -> appointment.professionalId().equals(UserTestConstants.OTHER_PROFESSIONAL_ID))
+            );
+
+            verify(appointmentRepository, never()).findByCustomerId(any());
+            verify(appointmentRepository, never()).findByProfessionalId(any());
+            verify(appointmentRepository).findAll();
+
+        }
+
+    }
 
 }
