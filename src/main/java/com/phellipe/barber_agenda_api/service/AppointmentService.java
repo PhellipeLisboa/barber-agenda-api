@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -197,26 +198,21 @@ public class AppointmentService {
     }
 
     private void validateAppointmentDateTimeAlreadyBooked(LocalDateTime appointmentDateTime, Appointment appointment) {
-        if (appointmentRepository.existsByAppointmentDateTime(appointmentDateTime)) {
 
-            User professional = userRepository.findById(appointment.getProfessionalId()).orElseThrow(
-                    () -> new UserNotFoundException(appointment.getProfessionalId())
+        List<Appointment> appointmentsAtDateTime =
+                appointmentRepository.findByAppointmentDateTime(appointmentDateTime).orElse(Collections.emptyList());
+
+        boolean professionalAlreadyBooked = appointmentsAtDateTime
+                .stream()
+                .anyMatch(a -> a.getProfessionalId().equals(appointment.getProfessionalId()));
+
+        if (professionalAlreadyBooked) {
+            throw new AppointmentDateTimeAlreadyBookedException(
+                    appointment.getProfessionalName(),
+                    appointmentDateTime
             );
-
-            List<Appointment> appointmentsAtDateTime = appointmentRepository.findByAppointmentDateTime(appointmentDateTime).orElseThrow(
-                    () -> new ResourceNotFoundException("appointment", appointmentDateTime)
-            );
-
-            Set<UUID> professionalsIdsAtDateTime = appointmentsAtDateTime
-                    .stream()
-                    .map(Appointment::getProfessionalId)
-                    .collect(Collectors.toSet());
-
-            if (professionalsIdsAtDateTime.contains(professional.getId())) {
-                throw new AppointmentDateTimeAlreadyBookedException(professional.getName(), appointmentDateTime);
-            }
-
         }
+
     }
 
     private void validateUserAlreadyHaveAnAppointment(LocalDateTime appointmentDateTime, Appointment appointment) {
@@ -224,16 +220,14 @@ public class AppointmentService {
                 () -> new UserNotFoundException(appointment.getCustomerId())
         );
 
-        List<Appointment> appointmentsAtDateTime = appointmentRepository.findByAppointmentDateTime(appointmentDateTime).orElseThrow(
-                () -> new ResourceNotFoundException("appointment", appointmentDateTime)
-        );
+        List<Appointment> appointmentsAtDateTime =
+                appointmentRepository .findByAppointmentDateTime(appointmentDateTime).orElse(Collections.emptyList());
 
-        Set<UUID> customersIdsAtDateTime = appointmentsAtDateTime
+        boolean customerAlreadyHasAppointment  = appointmentsAtDateTime
                 .stream()
-                .map(Appointment::getCustomerId)
-                .collect(Collectors.toSet());
+                .anyMatch(a -> a.getCustomerId().equals(customer.getId()));
 
-        if (customersIdsAtDateTime.contains(customer.getId())) {
+        if (customerAlreadyHasAppointment) {
             throw new InvalidAppointmentDateTimeException(customer.getName(), appointmentDateTime);
         }
     }
