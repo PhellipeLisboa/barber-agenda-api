@@ -41,7 +41,6 @@ public class AppointmentService {
         if (user.isOnlyUser()) {
             return appointmentRepository.findByCustomerId(user.getId())
                     .stream()
-                    .filter(appointment -> appointment.getCustomerId().equals(user.getId()))
                     .map(AppointmentMapper::toDto)
                     .toList();
         }
@@ -49,7 +48,6 @@ public class AppointmentService {
         if (user.hasRole("PROFESSIONAL")) {
             return appointmentRepository.findByProfessionalId(user.getId())
                     .stream()
-                    .filter(appointment -> appointment.getProfessionalId().equals(user.getId()))
                     .map(AppointmentMapper::toDto)
                     .toList();
         }
