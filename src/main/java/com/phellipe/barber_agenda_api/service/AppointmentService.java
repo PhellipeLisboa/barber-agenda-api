@@ -116,13 +116,24 @@ public class AppointmentService {
                 () -> new UserNotFoundException(appointmentEntity.getCustomerId())
         );
 
-        LocalDateTime effectiveDateTime = dto.appointmentDateTime().orElse(appointmentEntity.getAppointmentDateTime());
+        LocalDateTime updateDeadline = LocalDateTime.now().plusHours(24);
 
-        LocalDateTime limit = LocalDateTime.now().plusHours(24);
-
-        if (effectiveDateTime.isBefore(limit)) {
-            throw new InvalidOperationException("Appointments can only be updated or deleted at least 24 hours in advance.");
+        if (appointmentEntity.getAppointmentDateTime().isBefore(updateDeadline)) {
+            throw new InvalidOperationException(
+                    "Appointments can only be updated or deleted at least 24 hours in advance."
+            );
         }
+
+        dto.appointmentDateTime().ifPresent(newDateTime -> {
+            if (newDateTime.isBefore(updateDeadline)) {
+                throw new InvalidOperationException(
+                        "Appointments cannot be rescheduled to a date less than 24 hours in advance."
+                );
+            }
+
+            validateAppointmentDateTime(newDateTime, appointmentEntity, customer);
+            appointmentEntity.setAppointmentDateTime(newDateTime);
+        });
 
         dto.professionalId().ifPresent(professionalId -> {
             User professional = userRepository.findById(professionalId).orElseThrow(
@@ -138,11 +149,6 @@ public class AppointmentService {
 
         });
 
-        dto.appointmentDateTime().ifPresent(newDateTime -> {
-            validateAppointmentDateTime(newDateTime, appointmentEntity, customer);
-            appointmentEntity.setAppointmentDateTime(newDateTime);
-        });
-
         Appointment updatedAppointment = appointmentRepository.save(appointmentEntity);
 
         return AppointmentMapper.toDto(updatedAppointment);
@@ -155,9 +161,9 @@ public class AppointmentService {
                 () -> new ResourceNotFoundException("appointment", id)
         );
 
-        LocalDateTime limit = LocalDateTime.now().plusHours(24);
+        LocalDateTime deleteDeadline = LocalDateTime.now().plusHours(24);
 
-        if (appointment.getAppointmentDateTime().isBefore(limit)) {
+        if (appointment.getAppointmentDateTime().isBefore(deleteDeadline)) {
             throw new InvalidOperationException("Appointments can only be updated or deleted at least 24 hours in advance.");
         }
 
