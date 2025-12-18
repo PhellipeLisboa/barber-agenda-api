@@ -340,7 +340,7 @@ class AppointmentServiceTest {
     class findById {
 
         @Test
-        void findById_ShouldReturnAppointmentResponseDto_WhenIdExists() {
+        void findById_shouldReturnAppointmentResponseDto_WhenIdExists() {
 
             // Mocks
             when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_ID)).thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT));
@@ -358,7 +358,7 @@ class AppointmentServiceTest {
         }
 
         @Test
-        void findById_ShouldThrowResourceNotFoundException_WhenIdNotExists() {
+        void findById_shouldThrowResourceNotFoundException_WhenIdNotExists() {
 
             // Mocks
             when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_ID)).thenReturn(Optional.empty());
@@ -373,6 +373,66 @@ class AppointmentServiceTest {
             assertTrue(exception.getMessage().contains("appointment"));
             assertTrue(exception.getMessage().contains(AppointmentTestConstants.APPOINTMENT_ID.toString()));
             verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_ID);
+
+        }
+
+    }
+
+    @Nested
+    class delete {
+
+        @Test
+        void delete_shouldDeleteAppointment_WhenAppointmentIsAtLeast24HoursInAdvance() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID)).thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE));
+
+            // Act
+            appointmentService.delete(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID);
+
+            // Assert
+            verify(appointmentRepository, times(1)).delete(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE);
+            verify(appointmentRepository, never()).save(any());
+
+        }
+
+        @Test
+        void delete_shouldThrowResourceNotFoundException_WhenAppointmentDoesNotExists() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID)).thenReturn(Optional.empty());
+
+            // Act + Assert
+            ResourceNotFoundException exception = assertThrows(
+                    ResourceNotFoundException.class,
+                    () -> appointmentService.delete(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID)
+            );
+
+            assertTrue(exception.getMessage().contains("appointment"));
+            assertTrue(exception.getMessage().contains(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID.toString()));
+
+            verify(appointmentRepository, never()).delete(any());
+            verify(appointmentRepository, never()).save(any());
+
+        }
+
+        @Test
+        void delete_shouldThrowInvalidOperationException_WhenAppointmentIsLessThan24HoursInAdvance() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_THREE_HOURS_IN_FUTURE_ID))
+                    .thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT_TWENTY_THREE_HOURS_IN_FUTURE));
+
+            // Act + Assert
+            InvalidOperationException exception = assertThrows(
+                    InvalidOperationException.class,
+                    () -> appointmentService.delete(AppointmentTestConstants.APPOINTMENT_TWENTY_THREE_HOURS_IN_FUTURE_ID)
+            );
+
+            assertEquals("Appointments can only be updated or deleted at least 24 hours in advance.", exception.getMessage());
+
+            verify(appointmentRepository, never()).delete(any());
+            verify(appointmentRepository, never()).save(any());
 
         }
 
