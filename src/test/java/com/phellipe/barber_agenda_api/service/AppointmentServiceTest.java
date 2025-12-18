@@ -7,6 +7,7 @@ import com.phellipe.barber_agenda_api.repository.UserRepository;
 import com.phellipe.barber_agenda_api.testutil.AppointmentTestConstants;
 import com.phellipe.barber_agenda_api.testutil.BusinessHourTestConstants;
 import com.phellipe.barber_agenda_api.testutil.UserTestConstants;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,8 +16,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +47,19 @@ class AppointmentServiceTest {
     @Mock
     private AuthService authService;
 
+    @Mock
+    private Clock clock;
+
+    private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2025, 1, 1, 10, 0);
+
+    @BeforeEach
+    void setup() {
+        lenient().when(clock.instant()).thenReturn(
+                FIXED_NOW.atZone(ZoneId.systemDefault()).toInstant()
+        );
+        lenient().when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+    }
+
     @Nested
     class save {
 
@@ -64,7 +81,7 @@ class AppointmentServiceTest {
             assertNotNull(response);
             assertEquals(UserTestConstants.CUSTOMER_ID, response.customerId());
             assertEquals(UserTestConstants.PROFESSIONAL_ID, response.professionalId());
-            assertEquals(AppointmentTestConstants.VALID_DATE, response.appointmentDateTime());
+            assertEquals(AppointmentTestConstants.NOW, response.appointmentDateTime());
             verify(appointmentRepository).save(any());
 
         }
@@ -87,7 +104,7 @@ class AppointmentServiceTest {
             assertNotNull(response);
             assertEquals(UserTestConstants.CUSTOMER_ID, response.customerId());
             assertEquals(UserTestConstants.PROFESSIONAL_ID, response.professionalId());
-            assertEquals(AppointmentTestConstants.VALID_DATE, response.appointmentDateTime());
+            assertEquals(AppointmentTestConstants.NOW, response.appointmentDateTime());
             verify(appointmentRepository).save(any());
 
         }
@@ -110,7 +127,7 @@ class AppointmentServiceTest {
             assertNotNull(response);
             assertEquals(UserTestConstants.CUSTOMER_ID, response.customerId());
             assertEquals(UserTestConstants.PROFESSIONAL_ID, response.professionalId());
-            assertEquals(AppointmentTestConstants.VALID_DATE, response.appointmentDateTime());
+            assertEquals(AppointmentTestConstants.NOW, response.appointmentDateTime());
             verify(appointmentRepository).save(any());
 
         }
@@ -200,6 +217,7 @@ class AppointmentServiceTest {
             verify(appointmentRepository, never()).save(any());
         }
 
+        // REVISAR
         @Test
         void save_shouldThrowAppointmentOutOfBusinessHourException_WhenAppointmentDateTimeIsOutOfBusinessHour() {
             // Mocks
@@ -225,7 +243,7 @@ class AppointmentServiceTest {
             when(userRepository.findById(UserTestConstants.PROFESSIONAL_ID)).thenReturn(Optional.of(UserTestConstants.PROFESSIONAL));
             when(businessHourService.getHoursFor(any(LocalDate.class))).thenReturn(BusinessHourTestConstants.DEFAULT_BUSINESS_HOUR);
 
-            when(appointmentRepository.findByAppointmentDateTime(AppointmentTestConstants.VALID_DATE)).thenReturn(Optional.of(List.of(AppointmentTestConstants.APPOINTMENT)));
+            when(appointmentRepository.findByAppointmentDateTime(AppointmentTestConstants.NOW)).thenReturn(Optional.of(List.of(AppointmentTestConstants.APPOINTMENT)));
 
             // Act + Assert
             AppointmentDateTimeAlreadyBookedException exception = assertThrows(
@@ -245,7 +263,7 @@ class AppointmentServiceTest {
             when(userRepository.findById(UserTestConstants.PROFESSIONAL_ID)).thenReturn(Optional.of(UserTestConstants.PROFESSIONAL));
             when(businessHourService.getHoursFor(any(LocalDate.class))).thenReturn(BusinessHourTestConstants.DEFAULT_BUSINESS_HOUR);
 
-            when(appointmentRepository.findByAppointmentDateTime(AppointmentTestConstants.VALID_DATE)).thenReturn(Optional.of(List.of(AppointmentTestConstants.APPOINTMENT_WITH_OTHER_PROFESSIONAL)));
+            when(appointmentRepository.findByAppointmentDateTime(AppointmentTestConstants.NOW)).thenReturn(Optional.of(List.of(AppointmentTestConstants.APPOINTMENT_WITH_OTHER_PROFESSIONAL)));
 
             // Act + Assert
             InvalidAppointmentDateTimeException exception = assertThrows(
@@ -373,6 +391,207 @@ class AppointmentServiceTest {
             assertTrue(exception.getMessage().contains("appointment"));
             assertTrue(exception.getMessage().contains(AppointmentTestConstants.APPOINTMENT_ID.toString()));
             verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_ID);
+
+        }
+
+    }
+
+    @Nested
+    class update {
+
+        @Test
+        void update_shouldThrowResourceNotFoundException_WhenAppointmentDoesNotExist() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID)).thenReturn(Optional.empty());
+
+            // Act + Assert
+            ResourceNotFoundException exception = assertThrows(
+                    ResourceNotFoundException.class,
+                    () -> appointmentService.update(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID,
+                            AppointmentTestConstants.APPOINTMENT_PATCH_DTO_TO_TWENTY_NINE_HOURS_IN_FUTURE)
+            );
+
+
+            assertTrue(exception.getMessage().contains("appointment"));
+            assertTrue(exception.getMessage().contains(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID.toString()));
+
+            verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID);
+            verify(appointmentRepository, never()).save(any());
+
+        }
+
+        @Test
+        void update_shouldThrowUserNotFoundException_WhenCustomerDoesNotExist() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID))
+                    .thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE));
+            when(userRepository.findById(UserTestConstants.CUSTOMER_ID)).thenReturn(Optional.empty());
+
+            // Act + Assert
+            UserNotFoundException exception = assertThrows(
+                    UserNotFoundException.class,
+                    () -> appointmentService.update(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID,
+                            AppointmentTestConstants.APPOINTMENT_PATCH_DTO_TO_TWENTY_NINE_HOURS_IN_FUTURE)
+            );
+
+            assertTrue(exception.getMessage().contains(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE.getCustomerId().toString()));
+
+            verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID);
+            verify(userRepository).findById(UserTestConstants.CUSTOMER_ID);
+            verify(appointmentRepository, never()).save(any());
+
+        }
+
+        @Test
+        void update_shouldThrowInvalidOperationException_WhenExistingAppointmentIsWithin24Hours() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_THREE_HOURS_IN_FUTURE_ID))
+                    .thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT_TWENTY_THREE_HOURS_IN_FUTURE));
+            when(userRepository.findById(UserTestConstants.CUSTOMER_ID)).thenReturn(Optional.of(UserTestConstants.CUSTOMER));
+
+            // Act + Assert
+            InvalidOperationException exception = assertThrows(
+                    InvalidOperationException.class,
+                    () -> appointmentService.update(AppointmentTestConstants.APPOINTMENT_TWENTY_THREE_HOURS_IN_FUTURE_ID,
+                            AppointmentTestConstants.APPOINTMENT_PATCH_DTO_TO_TWENTY_NINE_HOURS_IN_FUTURE)
+            );
+
+            assertEquals("Appointments can only be updated or deleted at least 24 hours in advance.", exception.getMessage());
+
+            verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_TWENTY_THREE_HOURS_IN_FUTURE_ID);
+            verify(userRepository).findById(UserTestConstants.CUSTOMER_ID);
+            verify(appointmentRepository, never()).save(any());
+
+        }
+
+        @Test
+        void update_shouldThrowInvalidOperationException_WhenNewAppointmentDateTimeIsWithin24Hours() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID))
+                    .thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE));
+            when(userRepository.findById(UserTestConstants.CUSTOMER_ID)).thenReturn(Optional.of(UserTestConstants.CUSTOMER));
+
+            // Act + Assert
+            InvalidOperationException exception = assertThrows(
+                    InvalidOperationException.class,
+                    () -> appointmentService.update(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID,
+                            AppointmentTestConstants.APPOINTMENT_PATCH_DTO_TO_TWENTY_THREE_HOURS_IN_FUTURE)
+            );
+
+            assertEquals("Appointments cannot be rescheduled to a date less than 24 hours in advance.", exception.getMessage());
+
+            verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID);
+            verify(userRepository).findById(UserTestConstants.CUSTOMER_ID);
+            verify(appointmentRepository, never()).save(any());
+
+        }
+
+        @Test
+        void update_shouldThrowAppointmentOutOfBusinessHourException_WhenNewAppointmentTimeIsOutOfBusinessHours() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID))
+                    .thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE));
+            when(userRepository.findById(UserTestConstants.CUSTOMER_ID)).thenReturn(Optional.of(UserTestConstants.CUSTOMER));
+            when(businessHourService.getHoursFor(any(LocalDate.class))).thenReturn(BusinessHourTestConstants.DEFAULT_BUSINESS_HOUR);
+
+            // Act + Assert
+            AppointmentOutOfBusinessHourException exception = assertThrows(
+                    AppointmentOutOfBusinessHourException.class,
+                    () -> appointmentService.update(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID,
+                            AppointmentTestConstants.APPOINTMENT_PATCH_DTO_TO_DATE_OUT_OF_BUSINESS_HOUR)
+            );
+
+            assertEquals(
+                    String.format("Appointments cannot be scheduled outside the workday hours (%s - %s)",
+                            BusinessHourTestConstants.DEFAULT_BUSINESS_HOUR.getOpensAt().format(DateTimeFormatter.ofPattern("HH:mm")),
+                            BusinessHourTestConstants.DEFAULT_BUSINESS_HOUR.getClosesAt().format(DateTimeFormatter.ofPattern("HH:mm"))
+                    ),
+                    exception.getMessage()
+            );
+
+            verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID);
+            verify(userRepository).findById(UserTestConstants.CUSTOMER_ID);
+            verify(appointmentRepository, never()).save(any());
+
+        }
+        @Test
+        void update_shouldThrowUserNotFoundException_WhenProfessionalDoesNotExists() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID)).thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE));
+            when(userRepository.findById(UserTestConstants.CUSTOMER_ID)).thenReturn(Optional.of(UserTestConstants.CUSTOMER));
+            when(businessHourService.getHoursFor(any(LocalDate.class))).thenReturn(BusinessHourTestConstants.DEFAULT_BUSINESS_HOUR);
+            when(userRepository.findById(UserTestConstants.OTHER_PROFESSIONAL_ID)).thenReturn(Optional.empty());
+
+            // Act + Assert
+            UserNotFoundException exception = assertThrows(
+                    UserNotFoundException.class,
+                    () -> appointmentService.update(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID,
+                            AppointmentTestConstants.APPOINTMENT_PATCH_DTO_TO_TWENTY_NINE_HOURS_IN_FUTURE)
+            );
+
+            // Assert
+            assertTrue(exception.getMessage().contains(UserTestConstants.OTHER_PROFESSIONAL_ID.toString()));
+
+            verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID);
+            verify(userRepository).findById(UserTestConstants.CUSTOMER_ID);
+            verify(userRepository).findById(UserTestConstants.OTHER_PROFESSIONAL_ID);
+            verify(appointmentRepository, never()).save(any());
+
+        }
+
+        @Test
+        void update_shouldThrowRequiredRoleException_WhenProfessionalHasNoProfessionalRole() {
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID)).thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE));
+            when(userRepository.findById(UserTestConstants.CUSTOMER_ID)).thenReturn(Optional.of(UserTestConstants.CUSTOMER));
+            when(businessHourService.getHoursFor(any(LocalDate.class))).thenReturn(BusinessHourTestConstants.DEFAULT_BUSINESS_HOUR);
+            when(userRepository.findById(UserTestConstants.PROFESSIONAL_WITHOUT_ROLE_ID)).thenReturn(Optional.of(UserTestConstants.PROFESSIONAL_WITHOUT_ROLE));
+
+            // Act + Assert
+            RequiredRoleException exception = assertThrows(
+                    RequiredRoleException.class,
+                    () -> appointmentService.update(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID,
+                            AppointmentTestConstants.APPOINTMENT_PATCH_DTO_TO_PROFESSIONAL_WITHOUT_ROLE)
+            );
+
+            // Assert
+            assertEquals("Only users with role PROFESSIONAL can be chosen.", exception.getMessage());
+
+            verify(appointmentRepository).findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID);
+            verify(userRepository).findById(UserTestConstants.CUSTOMER_ID);
+            verify(userRepository).findById(UserTestConstants.PROFESSIONAL_WITHOUT_ROLE_ID);
+            verify(appointmentRepository, never()).save(any());
+        }
+
+        @Test
+        void update_shouldUpdateAppointment_WhenDataIsValid() {
+
+            // Mocks
+            when(appointmentRepository.findById(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID)).thenReturn(Optional.of(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE));
+            when(userRepository.findById(UserTestConstants.CUSTOMER_ID)).thenReturn(Optional.of(UserTestConstants.CUSTOMER));
+            when(businessHourService.getHoursFor(any(LocalDate.class))).thenReturn(BusinessHourTestConstants.DEFAULT_BUSINESS_HOUR);
+            when(userRepository.findById(UserTestConstants.OTHER_PROFESSIONAL_ID)).thenReturn(Optional.of(UserTestConstants.OTHER_PROFESSIONAL));
+            when(appointmentRepository.save(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE)).thenReturn(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE);
+
+            // Act
+            AppointmentResponseDto response = appointmentService.update(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE_ID, AppointmentTestConstants.APPOINTMENT_PATCH_DTO_TO_TWENTY_NINE_HOURS_IN_FUTURE);
+
+            // Assert
+            assertNotNull(response);
+
+            assertEquals(UserTestConstants.CUSTOMER_ID, response.customerId());
+            assertEquals(UserTestConstants.OTHER_PROFESSIONAL_ID, response.professionalId());
+            assertEquals(AppointmentTestConstants.DATE_TWENTY_NINE_HOURS_IN_FUTURE, response.appointmentDateTime());
+
+            verify(userRepository).findById(UserTestConstants.CUSTOMER_ID);
+            verify(userRepository).findById(UserTestConstants.OTHER_PROFESSIONAL_ID);
+            verify(appointmentRepository).save(AppointmentTestConstants.APPOINTMENT_TWENTY_FIVE_HOURS_IN_FUTURE);
 
         }
 
