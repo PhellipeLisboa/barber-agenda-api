@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
@@ -26,12 +27,14 @@ public class AppointmentService {
     private final BusinessHourService businessHourService;
     private final UserRepository userRepository;
     private final AuthService authService;
+    private final Clock clock;
 
-    public AppointmentService(AppointmentRepository appointmentRepository, BusinessHourService businessHourService, UserRepository userRepository, AuthService authService) {
+    public AppointmentService(AppointmentRepository appointmentRepository, BusinessHourService businessHourService, UserRepository userRepository, AuthService authService, Clock clock) {
         this.appointmentRepository = appointmentRepository;
         this.businessHourService = businessHourService;
         this.userRepository = userRepository;
         this.authService = authService;
+        this.clock = clock;
     }
 
     public List<AppointmentResponseDto> findAll() {
@@ -116,7 +119,7 @@ public class AppointmentService {
                 () -> new UserNotFoundException(appointmentEntity.getCustomerId())
         );
 
-        LocalDateTime updateDeadline = LocalDateTime.now().plusHours(24);
+        LocalDateTime updateDeadline = LocalDateTime.now(clock).plusHours(24);
 
         if (appointmentEntity.getAppointmentDateTime().isBefore(updateDeadline)) {
             throw new InvalidOperationException(
@@ -161,7 +164,7 @@ public class AppointmentService {
                 () -> new ResourceNotFoundException("appointment", id)
         );
 
-        LocalDateTime deleteDeadline = LocalDateTime.now().plusHours(24);
+        LocalDateTime deleteDeadline = LocalDateTime.now(clock).plusHours(24);
 
         if (appointment.getAppointmentDateTime().isBefore(deleteDeadline)) {
             throw new InvalidOperationException("Appointments can only be updated or deleted at least 24 hours in advance.");
@@ -184,7 +187,7 @@ public class AppointmentService {
     }
 
     private void validateAppointmentInPast(LocalDateTime appointmentDateTime) {
-        if (appointmentDateTime.isBefore(LocalDateTime.now())) {
+        if (appointmentDateTime.isBefore(LocalDateTime.now(clock))) {
             throw new InvalidAppointmentDateTimeException();
         }
     }
